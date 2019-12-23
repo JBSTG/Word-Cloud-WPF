@@ -31,7 +31,7 @@
             Total Words:
             </TextBlock>
         <TextBlock Grid.Row="2" Grid.Column="2" Name="uniqueWords">
-            Unique Words
+            Unique Words:
             </TextBlock>
         <Button Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Name="buildButton" Height="30" Width="120" IsEnabled="False" Click="viewCloud">
             Create Word Cloud

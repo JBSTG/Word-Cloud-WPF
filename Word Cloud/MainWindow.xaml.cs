@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Diagnostics;
 
 namespace Word_Cloud
 {
@@ -67,19 +68,17 @@ namespace Word_Cloud
         }
         private void viewCloud(Object sender, RoutedEventArgs e) {
 
-
-
-
             List<KeyValuePair<string,int>> sortedList = words.ToList().OrderByDescending(o => o.Value).ToList();
-            
             //MessageBox.Show(words.Keys.Count.ToString()+" "+sortedList.Count.ToString());
-
             int maxCount = 0;
+            int direction = 0;
             maxCount = sortedList[0].Value;
 
             //Randomize the words
             //sortedList = sortedList.OrderBy(a => Guid.NewGuid()).ToList();
 
+            modalBG.Visibility = Visibility.Visible;
+            //StackPanel modal = this.FindName("modalBG") as Panel;
 
             sortedList = centerFrequentWords(sortedList);
 
@@ -97,17 +96,98 @@ namespace Word_Cloud
                 {
                     fSize = 25;
                 }
-
                 l.FontSize = fSize;
-                l.Margin = new Thickness(0,0,0,0);
                 l.Padding = new Thickness(0,0,0,0);
+                //Assign dimentions to our new word.
+                l.Measure(new Size(Double.PositiveInfinity, Double.PositiveInfinity));
+                l.Arrange(new Rect(l.DesiredSize));
+                Canvas.SetLeft(l, (cloudCanvas.Width - l.ActualWidth) / 2);
+                Canvas.SetTop(l, (cloudCanvas.Height - l.ActualHeight) / 2);
+
+                //Check for collisions.
+                for (int j = 0;j<cloudCanvas.Children.Count;j++) {
+                    Label labelToCheck = cloudCanvas.Children[j] as Label;
+                    while (checkForCollision(l,labelToCheck)) {
+                        reposition(l,direction);
+                    }
+                }
                 cloudCanvas.Children.Add(l);
+
+                direction += 1;
+                if (direction == 10) {
+                    direction = 1;
+                }
             }
 
+            Debug.WriteLine(cloudCanvas.ActualWidth);
 
+        }
 
-            modalBG.Visibility = Visibility.Visible;
-            //StackPanel modal = this.FindName("modalBG") as Panel;
+        private bool checkForCollision(Label la,Label lb) {
+            if (Canvas.GetLeft(la)>=Canvas.GetLeft(lb)&&((Canvas.GetLeft(la))<=(Canvas.GetLeft(lb)+lb.ActualWidth))) {
+                if (Canvas.GetTop(la) >= Canvas.GetTop(lb) && ((Canvas.GetTop(la)) <= (Canvas.GetTop(lb) + lb.ActualHeight)))
+                {
+                    return true;
+                }
+            }
+            if (Canvas.GetLeft(la) <= Canvas.GetLeft(lb) && ((Canvas.GetLeft(la)) >= (Canvas.GetLeft(lb) + lb.ActualWidth)))
+            {
+                if (Canvas.GetTop(la) <= Canvas.GetTop(lb) && ((Canvas.GetTop(la)) >= (Canvas.GetTop(lb) + lb.ActualHeight)))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private void reposition(Label l,int direction) {
+            double leftOffset = 0;
+            double topOffset = 0;
+            switch (direction)
+            {
+                case 0:
+                    topOffset = 0;
+                    leftOffset = 0;
+                    break;
+                case 1:
+                    topOffset = 0;
+                    leftOffset = -10;
+                    break;
+                case 2:
+                    topOffset = -10;
+                    leftOffset = -10;
+                    break;
+                case 3:
+                    topOffset = -10;
+                    leftOffset = 0;
+                    break;
+                case 4:
+                    topOffset = -10;
+                    leftOffset = 10;
+                    break;
+                case 5:
+                    topOffset = 0;
+                    leftOffset = 10;
+                    break;
+                case 6:
+                    topOffset = 10;
+                    leftOffset = 10;
+                    break;
+                case 7:
+                    topOffset = 10;
+                    leftOffset = 0;
+                    break;
+                case 8:
+                    topOffset = 10;
+                    leftOffset = -10;
+                    break;
+                case 9:
+                    topOffset = -10;
+                    leftOffset = -10;
+                    break;
+            }
+            Canvas.SetLeft(l, Canvas.GetLeft(l)+ leftOffset);
+            Canvas.SetTop(l, Canvas.GetTop(l) + topOffset);
         }
 
         private void hideModal(Object sender, RoutedEventArgs e) {
