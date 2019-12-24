@@ -15,6 +15,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Diagnostics;
 
+
 namespace Word_Cloud
 {
     /// <summary>
@@ -68,7 +69,9 @@ namespace Word_Cloud
         }
         private void viewCloud(Object sender, RoutedEventArgs e) {
 
-            List<KeyValuePair<string,int>> sortedList = words.ToList().OrderByDescending(o => o.Value).ToList();
+            cloudCanvas.Children.Clear();
+            List<KeyValuePair<string, int>> sortedList = words.ToList();
+            sortedList.Sort((pair1, pair2) => pair2.Value.CompareTo(pair1.Value));
             //MessageBox.Show(words.Keys.Count.ToString()+" "+sortedList.Count.ToString());
             int maxCount = 0;
             int direction = 0;
@@ -80,22 +83,13 @@ namespace Word_Cloud
             modalBG.Visibility = Visibility.Visible;
             //StackPanel modal = this.FindName("modalBG") as Panel;
 
-            sortedList = centerFrequentWords(sortedList);
+            //sortedList = centerFrequentWords(sortedList);
+            Debug.WriteLine("Start");
 
             for (int i = 0;i<sortedList.Count;i++) {
                 Label l = new Label();
                 l.Content = sortedList[i].Key+" ";
                 int fSize = (int)(40.0 * ((double)sortedList[i].Value / (double)maxCount));
-                if (fSize < 10){
-                    fSize = 10;
-                }else if (fSize < 15) {
-                    fSize = 15;
-                }else if(fSize<20){
-                    fSize = 20;
-                }else if (fSize < 25)
-                {
-                    fSize = 25;
-                }
                 l.FontSize = fSize;
                 l.Padding = new Thickness(0,0,0,0);
                 //Assign dimentions to our new word.
@@ -105,104 +99,94 @@ namespace Word_Cloud
                 Canvas.SetTop(l, (cloudCanvas.Height - l.ActualHeight) / 2);
 
                 //Check for collisions.
+
                 for (int j = 0;j<cloudCanvas.Children.Count;j++) {
                     Label labelToCheck = cloudCanvas.Children[j] as Label;
-                    while (checkForCollision(l,labelToCheck)) {
-                        reposition(l,direction);
+                    Debug.WriteLine(l.Content + " to " + labelToCheck.Content);
+                    //Debug.WriteLine("Checking " + l.Content.ToString() + " against " +labelToCheck.Content.ToString());
+                    bool needToCheckForCollisions = true;
+                    bool movingRight = true;
+                    bool movingDown = true;
+                    Random r = new Random();
+                    int xDir = r.Next(1, 10);
+                    if (xDir > 5)
+                    {
+                        movingRight = true;
                     }
+                    else
+                    {
+                        movingRight = false;
+                    }
+                    int yDir = r.Next(1, 10);
+                    if (yDir > 5)
+                    {
+                        movingDown = true;
+                    }
+                    else
+                    {
+                        movingDown = false;
+                    }
+                    while (needToCheckForCollisions) {
+                        if (checkForCollision(l,labelToCheck))
+                        {
+                            Debug.WriteLine("Collision!");
+                            reposition(l, movingRight,movingDown);
+                        }
+                        else {
+                            needToCheckForCollisions = false;
+                        }
+                    }
+
                 }
                 cloudCanvas.Children.Add(l);
-
-                direction += 1;
-                if (direction == 10) {
-                    direction = 1;
-                }
             }
-
-            Debug.WriteLine(cloudCanvas.ActualWidth);
-
+            Debug.WriteLine("Complete");
         }
 
         private bool checkForCollision(Label la,Label lb) {
-            if (Canvas.GetLeft(la)>=Canvas.GetLeft(lb)&&((Canvas.GetLeft(la))<=(Canvas.GetLeft(lb)+lb.ActualWidth))) {
-                if (Canvas.GetTop(la) >= Canvas.GetTop(lb) && ((Canvas.GetTop(la)) <= (Canvas.GetTop(lb) + lb.ActualHeight)))
-                {
-                    return true;
-                }
-            }
-            if (Canvas.GetLeft(la) <= Canvas.GetLeft(lb) && ((Canvas.GetLeft(la)) >= (Canvas.GetLeft(lb) + lb.ActualWidth)))
-            {
-                if (Canvas.GetTop(la) <= Canvas.GetTop(lb) && ((Canvas.GetTop(la)) >= (Canvas.GetTop(lb) + lb.ActualHeight)))
-                {
-                    return true;
-                }
-            }
-            return false;
+            System.Drawing.RectangleF a = new System.Drawing.RectangleF();
+            System.Drawing.RectangleF b = new System.Drawing.RectangleF();
+
+            a.X = (float)Canvas.GetLeft(la);
+            a.Y = (float)Canvas.GetTop(la);
+            a.Width = (float)la.ActualWidth;
+            a.Height = (float)la.ActualHeight;
+
+            b.X = (float)Canvas.GetLeft(lb);
+            b.Y = (float)Canvas.GetTop(lb);
+            b.Width = (float)lb.ActualWidth;
+            b.Height = (float)lb.ActualHeight;
+
+            return a.IntersectsWith(b);
         }
 
-        private void reposition(Label l,int direction) {
-            double leftOffset = 0;
-            double topOffset = 0;
-            switch (direction)
+        private void reposition(Label l,bool movingRight,bool movingDown) {
+            double hOffset = 0;
+            double vOffset = 0;
+
+            if (movingRight)
             {
-                case 0:
-                    topOffset = 0;
-                    leftOffset = 0;
-                    break;
-                case 1:
-                    topOffset = 0;
-                    leftOffset = -10;
-                    break;
-                case 2:
-                    topOffset = -10;
-                    leftOffset = -10;
-                    break;
-                case 3:
-                    topOffset = -10;
-                    leftOffset = 0;
-                    break;
-                case 4:
-                    topOffset = -10;
-                    leftOffset = 10;
-                    break;
-                case 5:
-                    topOffset = 0;
-                    leftOffset = 10;
-                    break;
-                case 6:
-                    topOffset = 10;
-                    leftOffset = 10;
-                    break;
-                case 7:
-                    topOffset = 10;
-                    leftOffset = 0;
-                    break;
-                case 8:
-                    topOffset = 10;
-                    leftOffset = -10;
-                    break;
-                case 9:
-                    topOffset = -10;
-                    leftOffset = -10;
-                    break;
+                hOffset = 10;
             }
-            Canvas.SetLeft(l, Canvas.GetLeft(l)+ leftOffset);
-            Canvas.SetTop(l, Canvas.GetTop(l) + topOffset);
+            else {
+                hOffset = -10;
+            }
+
+            if (movingDown)
+            {
+                vOffset = 10;
+            }
+            else
+            {
+                vOffset = -10;
+            }
+
+            Canvas.SetLeft(l, Canvas.GetLeft(l)+ hOffset);
+            Canvas.SetTop(l, Canvas.GetTop(l) + vOffset);
         }
 
         private void hideModal(Object sender, RoutedEventArgs e) {
             modalBG.Visibility = Visibility.Collapsed;
         }
-
-        private List<KeyValuePair<string, int>> centerFrequentWords(List<KeyValuePair<string, int>> list) {
-            for (int i = list.Count-1;i>list.Count/2;i--) {
-                KeyValuePair<string, int> w = list[i];
-                list.RemoveAt(i);
-                list.Insert(0,w);
-            }
-            //MessageBox.Show(list[0].Key);
-            return list;
-        }
-
     }
 }
