@@ -29,7 +29,7 @@ namespace Word_Cloud
         public MainWindow()
         {
             InitializeComponent();
-            
+
         }
 
         private void getWordCount(Object sender, KeyEventArgs e) {
@@ -60,7 +60,7 @@ namespace Word_Cloud
             TextBlock uw = this.FindName("uniqueWords") as TextBlock;
             uw.Text = "Unique Words: " + words.Keys.Count;
 
-            if (rawWords.Length == 1 && rawWords[0]=="") {
+            if (rawWords.Length == 1 && rawWords[0] == "") {
                 tw.Text = "Total Words: " + 0;
                 uw.Text = "Unique Words: " + 0;
             }
@@ -72,78 +72,52 @@ namespace Word_Cloud
             cloudCanvas.Children.Clear();
             List<KeyValuePair<string, int>> sortedList = words.ToList();
             sortedList.Sort((pair1, pair2) => pair2.Value.CompareTo(pair1.Value));
-            //MessageBox.Show(words.Keys.Count.ToString()+" "+sortedList.Count.ToString());
-            int maxCount = 0;
-            int direction = 0;
-            maxCount = sortedList[0].Value;
-
-            //Randomize the words
-            //sortedList = sortedList.OrderBy(a => Guid.NewGuid()).ToList();
-
+            int maxCount = sortedList[0].Value;
             modalBG.Visibility = Visibility.Visible;
-            //StackPanel modal = this.FindName("modalBG") as Panel;
-
-            //sortedList = centerFrequentWords(sortedList);
             Debug.WriteLine("Start");
-
-            for (int i = 0;i<sortedList.Count;i++) {
-                Label l = new Label();
-                l.Content = sortedList[i].Key+" ";
-                int fSize = (int)(40.0 * ((double)sortedList[i].Value / (double)maxCount));
-                l.FontSize = fSize;
-                l.Padding = new Thickness(0,0,0,0);
-                //Assign dimentions to our new word.
-                l.Measure(new Size(Double.PositiveInfinity, Double.PositiveInfinity));
-                l.Arrange(new Rect(l.DesiredSize));
-                Canvas.SetLeft(l, (cloudCanvas.Width - l.ActualWidth) / 2);
-                Canvas.SetTop(l, (cloudCanvas.Height - l.ActualHeight) / 2);
-
+            int max = sortedList.Count;
+            if (sortedList.Count > 100)
+            {
+                max = 100;
+            }
+            
+            for (int i = 0; i < max; i++) {
+                //This function adds a new word label to the Center
+                Label l = addNewWordLabel(cloudCanvas,sortedList[i],maxCount);
                 //Check for collisions.
-
-                for (int j = 0;j<cloudCanvas.Children.Count;j++) {
+                bool needToCheckForCollisions = true;
+                int j = 0;
+                Random rDeg = new Random();
+                double deg = rDeg.Next(0,360);
+                int distance = 1;
+                while (needToCheckForCollisions&&cloudCanvas.Children.Count>0) {
                     Label labelToCheck = cloudCanvas.Children[j] as Label;
-                    Debug.WriteLine(l.Content + " to " + labelToCheck.Content);
-                    //Debug.WriteLine("Checking " + l.Content.ToString() + " against " +labelToCheck.Content.ToString());
-                    bool needToCheckForCollisions = true;
-                    bool movingRight = true;
-                    bool movingDown = true;
-                    Random r = new Random();
-                    int xDir = r.Next(1, 10);
-                    if (xDir > 5)
+                    //Debug.WriteLine(l.Content + " to " + labelToCheck.Content);
+                    //bool movingRight = setDirection();
+                    //bool movingDown = setDirection();
+                    if (checkForCollision(l, labelToCheck))
                     {
-                        movingRight = true;
-                    }
-                    else
-                    {
-                        movingRight = false;
-                    }
-                    int yDir = r.Next(1, 10);
-                    if (yDir > 5)
-                    {
-                        movingDown = true;
-                    }
-                    else
-                    {
-                        movingDown = false;
-                    }
-                    while (needToCheckForCollisions) {
-                        if (checkForCollision(l,labelToCheck))
-                        {
-                            Debug.WriteLine("Collision!");
-                            reposition(l, movingRight,movingDown);
-                        }
-                        else {
-                            needToCheckForCollisions = false;
+                        j = -1;
+                        Debug.WriteLine("Checking "+l.Content+" against "+labelToCheck.Content);
+                        reposition(l,distance,deg);
+                        distance++;
+                        deg++;
+                        if (deg >= 360) {
+                            deg = 0;
                         }
                     }
-
+                    else {
+                        needToCheckForCollisions = false;
+                    }
+                    j = j==-1 ? j = 0:j;
+                    j = j==(cloudCanvas.Children.Count - 1) ? j = 0 : j++;
                 }
                 cloudCanvas.Children.Add(l);
             }
             Debug.WriteLine("Complete");
         }
 
-        private bool checkForCollision(Label la,Label lb) {
+        private bool checkForCollision(Label la, Label lb) {
             System.Drawing.RectangleF a = new System.Drawing.RectangleF();
             System.Drawing.RectangleF b = new System.Drawing.RectangleF();
 
@@ -160,33 +134,90 @@ namespace Word_Cloud
             return a.IntersectsWith(b);
         }
 
-        private void reposition(Label l,bool movingRight,bool movingDown) {
-            double hOffset = 0;
-            double vOffset = 0;
-
-            if (movingRight)
-            {
-                hOffset = 10;
-            }
-            else {
-                hOffset = -10;
-            }
-
-            if (movingDown)
-            {
-                vOffset = 10;
-            }
-            else
-            {
-                vOffset = -10;
-            }
-
-            Canvas.SetLeft(l, Canvas.GetLeft(l)+ hOffset);
-            Canvas.SetTop(l, Canvas.GetTop(l) + vOffset);
+        private void reposition(Label l, int distance,double degrees) {
+            int x = (int)(distance*Math.Cos(degrees*Math.PI/180.0));
+            int y = (int)(distance * Math.Sin(degrees * Math.PI / 180.0));
+            //double hOffset = 0;
+            //double vOffset = 0;
+            Canvas.SetLeft(l, Canvas.GetLeft(l) + x);
+            Canvas.SetTop(l, Canvas.GetTop(l) + y);
         }
 
         private void hideModal(Object sender, RoutedEventArgs e) {
             modalBG.Visibility = Visibility.Collapsed;
         }
+
+        private bool setDirection() {
+            Random r = new Random();
+            bool direction;
+            int xDir = r.Next(1, 10);
+            if (xDir > 5)
+            {
+                direction = true;
+            }
+            else
+            {
+                direction = false;
+            }
+            return direction;
+        }
+
+        private Brush getRandomColor() {
+            Random r = new Random();
+            int brush = r.Next(1,10);
+            switch (brush) {
+                case 1:
+                    return Brushes.Crimson;
+                    break;
+                case 2:
+                    return Brushes.SkyBlue;
+                    break;
+                case 3:
+                    return Brushes.DarkOliveGreen;
+                    break;
+                case 4:
+                    return Brushes.Orange;
+                    break;
+                case 5:
+                    return Brushes.HotPink;
+                    break;
+                case 6:
+                    return Brushes.LightGoldenrodYellow;
+                    break;
+                case 7:
+                    return Brushes.PaleVioletRed;
+                    break;
+                case 8:
+                    return Brushes.DarkSlateBlue;
+                    break;
+                case 9:
+                    return Brushes.DarkSlateGray;
+                    break;
+                case 10:
+                    return Brushes.LightSeaGreen;
+                    break;
+                default:
+                    return Brushes.Black;
+                    break;
+            }
+        }
+        private Label addNewWordLabel(Canvas cloudCanvas,KeyValuePair<string,int> wordAndCount,int maxCount) {
+            Label l = new Label();
+            l.Content = wordAndCount.Key + " ";
+            int fSize = (int)(40.0 * ((double)wordAndCount.Value / (double)maxCount));
+            l.FontSize = fSize+1;
+            l.Background = Brushes.DarkSlateGray;
+            l.FontFamily = new FontFamily("Impact");
+            l.Padding = new Thickness(0, 0, 0, 0);
+            l.HorizontalAlignment = HorizontalAlignment.Center;
+            l.Foreground = getRandomColor();
+            //Assign dimentions to our new word.
+            l.Measure(new Size(Double.PositiveInfinity, Double.PositiveInfinity));
+            l.Arrange(new Rect(l.DesiredSize));
+            Canvas.SetLeft(l, (cloudCanvas.Width - l.ActualWidth) / 2);
+            Canvas.SetTop(l, (cloudCanvas.Height - l.ActualHeight) / 2);
+            return l;
+        }
+        
     }
 }
