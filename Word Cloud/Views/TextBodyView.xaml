@@ -1,0 +1,65 @@
+﻿<UserControl x:Class="Word_Cloud.Views.TextBodyView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Word_Cloud.Views"
+             mc:Ignorable="d" 
+             d:DesignHeight="{x:Static SystemParameters.PrimaryScreenHeight}"
+             d:DesignWidth="{x:Static SystemParameters.PrimaryScreenWidth}"
+             Height="{x:Static SystemParameters.PrimaryScreenHeight}"
+             Width="{x:Static SystemParameters.PrimaryScreenWidth}"
+             Background="Crimson">
+    <Border BorderThickness="0">
+        <Grid Height="{x:Static SystemParameters.PrimaryScreenHeight}" VerticalAlignment="Center">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <ItemsControl Grid.Column="1" Grid.Row="1" Grid.RowSpan="4" Grid.ColumnSpan="4" ItemsSource="{Binding Path=DisplayWords}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Canvas ClipToBounds="True" Width="800" Height="350" Background="DarkSlateGray"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemContainerStyle>
+                    <Style TargetType="ContentPresenter">
+                        <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                        <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border BorderBrush="White" BorderThickness="1">
+                        <TextBlock HorizontalAlignment="Center" Height="15" Width="20" FontSize="10" Foreground="White" Text="{Binding Path=Text}" />
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="4" Text="{Binding Path=TextBody,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBlock  Grid.Row="7" Grid.Column="1">
+                <Run Foreground="White" Text="Unique Words: "/>
+                <Run Foreground="White" Text="{Binding Path = Map.Keys.Count, Mode = OneWay}"/>
+            </TextBlock>
+            <TextBlock Grid.Row="7" Grid.Column="2" Text="{Binding Path=TextBody}"/>
+            <TextBlock/>
+            <Button Command="{Binding GenerateCloudCommand}" CommandParameter="{Binding Path = DisplayWords}" Grid.Row="7" Grid.Column="4" Content="Generate"/>
+        </Grid>
+    </Border>
+</UserControl>
